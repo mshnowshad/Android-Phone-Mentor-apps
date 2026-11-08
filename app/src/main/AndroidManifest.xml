@@ -44,6 +44,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- PHASE-2 ;Focus Setup Activity — timer select page -->
+        <activity
+            android:name=".focus.FocusSetupActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PhoneMentor"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".focus.FocusModeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PhoneMentor"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
     </application>
 
 </manifest>

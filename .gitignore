@@ -1,15 +1,23 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Gradle ও বিল্ড আর্টিফ্যাক্ট
+.gradle/
+build/
+*.apk
+*.aab
+
+# লোকাল কনফিগারেশন (আপনার কম্পিউটারের SDK পাথ ধারণ করে)
 local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.navigation/
+captures/
+
+# সিস্টেম ফাইল
+.DS_Store
+Thumbs.db
+
+# সাইনিং কী (অবশ্যই আপলোড করবেন না!)
+*.jks
+*.keystore
+key.properties

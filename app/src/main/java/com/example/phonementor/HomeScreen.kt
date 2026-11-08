@@ -39,6 +39,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
+// PHASE -2
+import android.content.Intent
+import com.example.phonementor.focus.FocusSetupActivity
+
 
 private data class Feature(val title: String, val icon: ImageVector)
 
@@ -100,7 +104,14 @@ fun HomeScreen() {
             usage = usage,
             onGrantClick = { openUsageAccessSettings(context) },
             onMenuClick = { panelOpen = true },
-            onFeatureClick = { comingSoon(it.title) }
+            onFeatureClick = { feature ->
+                if (feature.title == "Focus mode") {
+                    context.startActivity(Intent(context, FocusSetupActivity::class.java))
+                } else {
+                    comingSoon(feature.title)
+                }
+
+            }
         )
 
         AnimatedVisibility(
