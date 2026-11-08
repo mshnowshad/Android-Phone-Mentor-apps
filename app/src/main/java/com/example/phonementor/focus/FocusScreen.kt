@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Celebration
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,19 +30,20 @@ import java.util.Locale
  * FocusScreen
  *
  * @param durationMinutes total focus duration in minutes
- * @param onExit called after the user confirms exit
+ * @param onExit called when user manually exits (after confirmation)
+ * @param onFinish called when the timer naturally reaches 00:00
  *
  * Layout:
  *  [Box black]
- *      ├── Top-right ✕ (Exit)
- *      ├── Center: big clock (current time)
- *      ├── Date below clock
- *      └── Countdown card (time remaining)
+ *      ├── Top-right ✕ (Exit → dialog)
+ *      ├── Center: big clock + date + countdown card
+ *      └── When timer hits 0 → "Focus complete" dialog → auto onFinish()
  */
 @Composable
 fun FocusScreen(
     durationMinutes: Int = 25,
-    onExit: () -> Unit = {}
+    onExit: () -> Unit = {},
+    onFinish: () -> Unit = {}
 ) {
     // ---- Colors ----
     val backgroundColor = Color(0xFF000000)
@@ -50,11 +52,14 @@ fun FocusScreen(
     val accentColor    = Color(0xFF38BDF8)
 
     // ---- State ----
-    var showExitDialog by remember { mutableStateOf(false) }
-    var currentTime    by remember { mutableStateOf(Date()) }
-    var remainingMillis by remember {
+    var showExitDialog     by remember { mutableStateOf(false) }
+    var showFinishDialog   by remember { mutableStateOf(false) }
+    var currentTime        by remember { mutableStateOf(Date()) }
+    var remainingMillis    by remember {
         mutableStateOf(durationMinutes * 60_000L)
     }
+    // True once the countdown has finished (prevents repeated triggers)
+    var finished           by remember { mutableStateOf(false) }
 
     // Tick every second: update clock and countdown
     LaunchedEffect(Unit) {
@@ -62,13 +67,22 @@ fun FocusScreen(
             currentTime = Date()
             if (remainingMillis > 0) {
                 remainingMillis = (remainingMillis - 1_000L).coerceAtLeast(0L)
+
+                // When it just reached zero → show finish dialog once
+                if (remainingMillis == 0L && !finished) {
+                    finished = true
+                    showFinishDialog = true
+                }
             }
             delay(1_000L)
         }
     }
 
-    // Phone back button shows the exit dialog
-    BackHandler { showExitDialog = true }
+    // Back button = try to exit
+    BackHandler {
+        // Once finished, back shouldn't open exit dialog (celebration is showing)
+        if (!finished) showExitDialog = true
+    }
 
     // ---- Formatters ----
     val timeFormatter  = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
@@ -76,7 +90,7 @@ fun FocusScreen(
     val timeString = timeFormatter.format(currentTime)
     val dateString = dateFormatter.format(currentTime)
 
-    // ---- Countdown format (MM:SS) ----
+    // ---- Countdown (MM:SS) ----
     val remainingMinutes = (remainingMillis / 1000 / 60).toInt()
     val remainingSeconds = ((remainingMillis / 1000) % 60).toInt()
     val countdownText = String.format(
@@ -91,21 +105,23 @@ fun FocusScreen(
             .background(backgroundColor)
             .systemBarsPadding()
     ) {
-        // Exit button
-        IconButton(
-            onClick = { showExitDialog = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                Icons.Filled.Close,
-                contentDescription = "Exit Focus Mode",
-                tint = accentColor
-            )
+        // Exit button (hidden once finished)
+        if (!finished) {
+            IconButton(
+                onClick = { showExitDialog = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Exit Focus Mode",
+                    tint = accentColor
+                )
+            }
         }
 
-        // Center: time, date, countdown
+        // Center content
         Column(
             Modifier
                 .align(Alignment.Center)
@@ -152,14 +168,14 @@ fun FocusScreen(
             }
             Spacer(Modifier.height(12.dp))
             Text(
-                "Focus mode is on",
+                if (finished) "Session complete" else "Focus mode is on",
                 fontSize = 14.sp,
                 color = accentColor.copy(alpha = 0.7f)
             )
         }
     }
 
-    // ---- Exit confirmation dialog ----
+    // ---- Manual exit dialog ----
     if (showExitDialog) {
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
@@ -182,10 +198,37 @@ fun FocusScreen(
             }
         )
     }
+
+    // ---- Auto-finish celebration dialog ----
+    if (showFinishDialog) {
+        AlertDialog(
+            onDismissRequest = { /* not dismissible by tapping outside */ },
+            icon = {
+                Icon(
+                    Icons.Outlined.Celebration,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = { Text("Focus session complete! 🎉") },
+            text = {
+                Text("Great job staying focused. You will be taken back to the setup screen.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showFinishDialog = false
+                    onFinish()
+                }) {
+                    Text("Done")
+                }
+            }
+        )
+    }
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 private fun FocusScreenPreview() {
-    FocusScreen(durationMinutes = 25, onExit = {})
+    FocusScreen(durationMinutes = 25, onExit = {}, onFinish = {})
 }

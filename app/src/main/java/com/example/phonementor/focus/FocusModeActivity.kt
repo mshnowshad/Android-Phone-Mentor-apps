@@ -27,7 +27,8 @@ class FocusModeActivity : ComponentActivity() {
             PhoneMentorTheme {
                 FocusScreen(
                     durationMinutes = durationMinutes,
-                    onExit = { finish() }   // Exit confirm হলে activity বন্ধ
+                    onExit = { finish() },     // manual exit
+                    onFinish = { finish() }    // auto-exit when timer hits 0
                 )
             }
         }
