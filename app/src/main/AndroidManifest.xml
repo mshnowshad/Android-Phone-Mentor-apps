@@ -9,6 +9,23 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
+
+    <!-- ############### PHASE - 2 ##################   -->
+
+    <!--  Wifi state read permission   -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Draw overlays on top of other apps (user must grant in Settings) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+
+
+
+
+
+
+
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -58,6 +75,8 @@
             android:theme="@style/Theme.PhoneMentor"
             android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|keyboardHidden" />
+
+
 
     </application>
 
