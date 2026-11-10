@@ -1,0 +1,43 @@
+mshnowshad@linux:~/Android apps/PhoneMentor$ 
+mshnowshad@linux:~/Android apps/PhoneMentor$ tree -L 5 -I 'build|.gradle|.git|.idea|*.webp|*.jar|gradlew*|local.properties'
+.
+├── app
+│   ├── build.gradle.kts
+│   ├── now
+│   └── src
+│       ├── androidTest
+│       │   └── java
+│       │       └── com
+│       ├── main
+│       │   ├── AndroidManifest.xml
+│       │   ├── ic_launcher-playstore.png
+│       │   ├── java
+│       │   │   └── com
+│       │   ├── keepRules
+│       │   │   └── rules.keep
+│       │   └── res
+│       │       ├── drawable
+│       │       ├── mipmap-anydpi
+│       │       ├── mipmap-anydpi-v26
+│       │       ├── mipmap-hdpi
+│       │       ├── mipmap-mdpi
+│       │       ├── mipmap-xhdpi
+│       │       ├── mipmap-xxhdpi
+│       │       ├── mipmap-xxxhdpi
+│       │       ├── values
+│       │       └── xml
+│       └── test
+│           └── java
+│               └── com
+├── build.gradle.kts
+├── gradle
+│   ├── gradle-daemon-jvm.properties
+│   ├── libs.versions.toml
+│   └── wrapper
+│       └── gradle-wrapper.properties
+├── gradle.properties
+└── settings.gradle.kts
+
+26 directories, 11 files
+mshnowshad@linux:~/Android apps/PhoneMentor$ 
+

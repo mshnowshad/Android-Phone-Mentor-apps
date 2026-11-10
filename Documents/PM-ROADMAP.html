@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Mentor - App Development Roadmap</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            --border-color: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .roadmap {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .roadmap::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 5px;
+            bottom: 5px;
+            width: 3px;
+            background: var(--border-color);
+        }
+
+        .phase-card {
+            position: relative;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+        }
+
+        .phase-card::before {
+            content: '';
+            position: absolute;
+            left: -33px;
+            top: 25px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 3px solid var(--bg-color);
+        }
+
+        .phase-title {
+            font-size: 1.3rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .phase-content ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .phase-content li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .phase-content li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .phase-content strong {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            .phase-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🧠 Phone Mentor</h1>
+            <p>App Development & Execution Roadmap (Infinix / Android Native)</p>
+        </header>
+
+        <div class="roadmap">
+            
+            <!-- Phase 1 -->
+            <div class="phase-card">
+                <div class="phase-title">Phase 1: Environment Setup & USB Testing (Week 1)</div>
+                <div class="phase-content">
+                    <ul>
+                        <li><strong>Software Setup:</strong> Android Studio (Latest Version) এবং Java JDK ইনস্টল করা।</li>
+                        <li><strong>Infinix USB Debugging:</strong> Build Number থেকে Developer Options অন করে USB Debugging চালু করা।</li>
+                        <li><strong>Background Optimization:</strong> Infinix XOS aggressive killing রোধ করতে Battery Optimization বন্ধ করা।</li>
+                        <li><strong>First Run:</strong> প্রজেক্ট তৈরি করে USB ক্যাবলের মাধ্যমে সরাসরি ফোনে রান করা নিশ্চিত করা।</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 2 (UPDATED FOR ULTRA BATTERY / FOCUS LAUNCHER MODE) -->
+            <div class="phase-card">
+                <div class="phase-title">Phase 2: MVP Version 1.0 — Ultra Minimal Focus Mode Launcher (Week 2 - 3)</div>
+                <div class="phase-content">
+                    <ul>
+                        <li><strong>Infinix Ultra Battery Saver Layout:</strong> পিচ-ডার্ক ব্যাকগ্রাউন্ডে সময়, তারিখ এবং টপ রাইট এক্সিট বাটন যুক্ত ড্যাশবোর্ড স্ক্রিন তৈরি।</li>
+                        <li><strong>Quick Control Toggles:</strong> অ্যাপ থেকেই সরাসরি Wi-Fi, Mobile Data এবং Airplane Mode/Location অন-অফ করার টগল টাইলস ইন্টারফেস।</li>
+                        <li><strong>Allowed Apps Grid & Picker:</strong> শুধুমাত্র অনুমোদিত ৩-৫টি অ্যাপ (যেমন: Phone, WhatsApp, Notes, Calculator) গ্রিড ভিউতে দেখানো এবং ম্যাপ করার লজিক।</li>
+                        <li><strong>Strict Lock & Notification Suppression:</strong> ফোকাস মোড চলাকালে অন্যান্য সব অ্যাপ সম্পূর্ণ লক রাখা এবং `NotificationListenerService` / DND দিয়ে সব নোটিফিকেশন হাইড করে রাখা।</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 3 -->
+            <div class="phase-card">
+                <div class="phase-title">Phase 3: Version 1.5 — Focus Mode & Lock Screen (Week 4 - 5)</div>
+                <div class="phase-content">
+                    <ul>
+                        <li><strong>Foreground Service:</strong> ব্যাকগ্রাউন্ডে নিরবিচ্ছিন্নভাবে কাউন্টডাউন টিকিয়ে রাখা।</li>
+                        <li><strong>Overlay UI:</strong> `SYSTEM_ALERT_WINDOW` পারমিশন নিয়ে ফুল-স্ক্রিন লক ওভারলে তৈরি করা।</li>
+                        <li><strong>Emergency Exit:</strong> ১০ সেকেন্ডের কাউন্টডাউন ও রিজন সিলেকশন সহ ফ্রিকশন লজিক যোগ করা।</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 4 -->
+            <div class="phase-card">
+                <div class="phase-title">Phase 4: Version 2.0 — Mentor Mode & Distraction Interceptor (Week 6 - 8)</div>
+                <div class="phase-content">
+                    <ul>
+                        <li><strong>Accessibility Service:</strong> স্ক্রিনের কন্টেন্ট ও প্যাকেজ নেম মনিটরিং সেটআপ।</li>
+                        <li><strong>Shorts/Reels Blocker:</strong> Facebook, Instagram ও YouTube-এর শর্টস/রিলস ডিটেক্ট করে ব্লক করা।</li>
+                        <li><strong>Mentor Prompts:</strong> নির্দিষ্ট সময়ে অ্যাপ খুললে পপ-আপ করে কারণ জিজ্ঞেস করা এবং লিমিট সেট করা।</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 5 -->
+            <div class="phase-card">
+                <div class="phase-title">Phase 5: Version 2.5 — Daily Phone Report & Goal System (Week 9 - 10)</div>
+                <div class="phase-content">
+                    <ul>
+                        <li><strong>Usage Stats:</strong> `UsageStatsManager` দিয়ে দৈনিক স্ক্রিন টাইম ও অ্যাপ ব্যবহারের হিসাব রাখা।</li>
+                        <li><strong>Local Database:</strong> ইউজারের ডেইলি গোল এবং হিস্টোরি লোকাল ডাটাবেজে সংরক্ষণ করা।</li>
+                        <li><strong>Reward System:</strong> নির্দিষ্ট গোল পূরণ সাপেক্ষে এন্টারটেইনমেন্ট টাইম বাড়িয়ে দেওয়া।</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 6 -->
+            <div class="phase-card">
+                <div class="phase-title">Phase 6: Testing, Optimization & Publishing (Week 11 - 12)</div>
+                <div class="phase-content">
+                    <ul>
+                        <li><strong>OS Testing:</strong> Infinix XOS এবং অন্যান্য অ্যান্ড্রয়েড ডিভাইসে ব্যাকগ্রাউন্ড পারফরম্যান্স টেস্ট।</li>
+                        <li><strong>Play Store Prep:</strong> প্রাইভেসী পলিসি, অ্যাপ আইকন এবং স্ক্রিনশট প্রস্তুত করা।</li>
+                        <li><strong>Release:</strong> Google Play Console-এ AAB আপলোড করে পাবলিশ করা।</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

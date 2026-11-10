@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhoneMentor — Development Log</title>
+<style>
+:root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --orange: #f97316;
+    --border: #334155;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+body { background:var(--bg); color:var(--text); line-height:1.6; padding:32px 16px; }
+.container { max-width:900px; margin:0 auto; }
+
+header { text-align:center; margin-bottom:40px; }
+header h1 {
+    font-size:2rem;
+    background:linear-gradient(135deg,#38bdf8,#818cf8);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:8px;
+}
+header p { color:var(--muted); font-size:0.9rem; }
+
+/* Timeline style */
+.feature-block {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:24px;
+    margin-bottom:20px;
+    position:relative;
+    overflow:hidden;
+}
+.feature-block::before {
+    content:'';
+    position:absolute;
+    top:0; left:0;
+    width:4px; height:100%;
+    background:var(--accent);
+}
+.feature-block.f1::before { background:var(--green); }
+.feature-block.f2::before { background:var(--blue); }
+.feature-block.f3::before { background:var(--purple); }
+.feature-block.f4::before { background:var(--orange); }
+
+.feature-header {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+}
+.feature-num {
+    background:rgba(56,189,248,0.15);
+    color:var(--accent);
+    padding:4px 10px;
+    border-radius:8px;
+    font-size:0.75rem;
+    font-weight:700;
+    letter-spacing:0.05em;
+}
+.feature-block.f1 .feature-num { background:rgba(34,197,94,0.15); color:var(--green); }
+.feature-block.f2 .feature-num { background:rgba(59,130,246,0.15); color:var(--blue); }
+.feature-block.f3 .feature-num { background:rgba(168,85,247,0.15); color:var(--purple); }
+.feature-block.f4 .feature-num { background:rgba(249,115,22,0.15); color:var(--orange); }
+
+.feature-title { font-size:1.1rem; font-weight:600; }
+.feature-sub { color:var(--muted); font-size:0.85rem; margin-bottom:16px; }
+
+.file-group {
+    margin-bottom:14px;
+}
+.file-group h4 {
+    font-size:0.8rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:8px;
+}
+
+.file-tag {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 12px;
+    margin:4px 4px 4px 0;
+    font-family:'SF Mono',Monaco,monospace;
+    font-size:0.75rem;
+    color:var(--accent);
+    word-break:break-all;
+}
+.file-tag.new { color:var(--green); border-color:rgba(34,197,94,0.3); background:rgba(34,197,94,0.06); }
+.file-tag.mod { color:var(--blue); border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.06); }
+
+.file-tag .tag-icon { font-size:0.9rem; }
+
+ul.detail-list {
+    list-style:none;
+    padding-left:0;
+    margin-top:8px;
+}
+ul.detail-list li {
+    padding-left:18px;
+    position:relative;
+    color:var(--muted);
+    font-size:0.85rem;
+    margin-bottom:6px;
+}
+ul.detail-list li::before {
+    content:'▸';
+    position:absolute; left:0;
+    color:var(--accent);
+}
+ul.detail-list li strong { color:var(--text); }
+
+footer {
+    text-align:center; color:var(--muted); font-size:0.8rem;
+    margin-top:40px; padding-top:20px; border-top:1px solid var(--border);
+}
+
+.summary {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:32px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px;
+    text-align:center;
+}
+.summary .item .num { font-size:1.6rem; font-weight:700; color:var(--accent); display:block; }
+.summary .item .label { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+    <h1>📱 PhoneMentor — Development Log</h1>
+    <p>Conversation-wise feature tracking</p>
+</header>
+
+<div class="summary">
+    <div class="item"><span class="num">4</span><span class="label">Features</span></div>
+    <div class="item"><span class="num">4</span><span class="label">Files Created</span></div>
+    <div class="item"><span class="num">2</span><span class="label">Files Modified</span></div>
+</div>
+
+<!-- ============================================ -->
+<!-- FEATURE 1: INTERFACE / HOME SCREEN -->
+<!-- ============================================ -->
+<div class="feature-block f1">
+    <div class="feature-header">
+        <span class="feature-num">FEATURE 1</span>
+        <span class="feature-title">Phone Mentor Interface (Home Screen)</span>
+    </div>
+    <p class="feature-sub">অ্যাপের মূল ড্যাশবোর্ড — screen time, feature tiles, side panel, permission flow ইত্যাদি।</p>
+
+    <div class="file-group">
+        <h4>Files Created / Edited</h4>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> HomeScreen.kt</span>
+    </div>
+
+    <ul class="detail-list">
+        <li><strong>HomeScreen.kt</strong> — সম্পূর্ণ ইন্টারফেস তৈরি। TopBar, ScreenTimeCard, PermissionCard, FeatureTile (8টা), SidePanel (slide-in), usage stats integration।</li>
+        <li>এটা ছিল Phase 1-এর কাজ —<strong>clean interface of the app</strong>।</li>
+    </ul>
+</div>
+
+<!-- ============================================ -->
+<!-- FEATURE 2: FOCUS SETUP PAGE -->
+<!-- ============================================ -->
+<div class="feature-block f2">
+    <div class="feature-header">
+        <span class="feature-num">FEATURE 2</span>
+        <span class="feature-title">Focus Setup Page (Timer Select)</span>
+    </div>
+    <p class="feature-sub">Focus mode টাইল-এ চাপলে যে পেজ খোলে — এখানে duration সিলেক্ট করে Start Focus চাপতে হয়।</p>
+
+    <div class="file-group">
+        <h4>Files Created</h4>
+        <span class="file-tag new"><span class="tag-icon">🆕</span> focus/FocusSetupActivity.kt</span>
+        <span class="file-tag new"><span class="tag-icon">🆕</span> focus/FocusSetupScreen.kt</span>
+    </div>
+    <div class="file-group">
+        <h4>Files Modified</h4>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> HomeScreen.kt</span>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> AndroidManifest.xml</span>
+    </div>
+
+    <ul class="detail-list">
+        <li><strong>FocusSetupActivity.kt</strong> — host Activity; selected duration intent দিয়ে FocusModeActivity-তে পাঠায়। Exit করলে এখানে ফিরে আসে (finish করে না)।</li>
+        <li><strong>FocusSetupScreen.kt</strong> — Compose UI: back arrow, big icon, title, preset chips, Start Focus বাটন।</li>
+        <li><strong>HomeScreen.kt</strong> — "Focus mode" টাইল-এ চাপলে এখন FocusSetupActivity লঞ্চ হয় (আগে শুধু Toast)।</li>
+        <li><strong>AndroidManifest.xml</strong> — .focus.FocusSetupActivity declare।</li>
+    </ul>
+</div>
+
+<!-- ============================================ -->
+<!-- FEATURE 3: FOCUS MODE SCREEN + AUTO-EXIT + CUSTOM TIMER -->
+<!-- ============================================ -->
+<div class="feature-block f3">
+    <div class="feature-header">
+        <span class="feature-num">FEATURE 3</span>
+        <span class="feature-title">Focus Mode Screen + Auto-Exit + Custom Timer</span>
+    </div>
+    <p class="feature-sub">Start Focus চাপলে যে ফোকাস স্ক্রিন খোলে। বড় ঘড়ি, তারিখ, countdown, celebration, exit dialog, custom minutes support।</p>
+
+    <div class="file-group">
+        <h4>Files Created</h4>
+        <span class="file-tag new"><span class="tag-icon">🆕</span> focus/FocusModeActivity.kt</span>
+        <span class="file-tag new"><span class="tag-icon">🆕</span> focus/FocusScreen.kt</span>
+    </div>
+    <div class="file-group">
+        <h4>Files Modified</h4>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> focus/FocusSetupScreen.kt <span style="color:#64748b">(custom input যোগ)</span></span>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> focus/FocusScreen.kt <span style="color:#64748b">(auto-exit যোগ)</span></span>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> focus/FocusModeActivity.kt <span style="color:#64748b">(onFinish callback)</span></span>
+    </div>
+
+    <ul class="detail-list">
+        <li><strong>FocusModeActivity.kt</strong> — duration intent থেকে নেয়; FocusScreen-এ পাঠায়; onExit/onFinish-এ finish()।</li>
+        <li><strong>FocusScreen.kt</strong> — বড় 12-hour clock, date, countdown card, Exit door icon, exit dialog, celebration dialog, auto-exit when timer hits 00:00।</li>
+        <li><strong>FocusSetupScreen.kt</strong> — Custom timer input যোগ (1–600 min, validation সহ)।</li>
+        <li><strong>FocusModeActivity.kt</strong> — onFinish callback যোগ, যাতে timer শেষ হলে auto finish হয়।</li>
+    </ul>
+</div>
+
+<!-- ============================================ -->
+<!-- FEATURE 4: REDESIGNED FOCUS SCREEN (AMOLED + TOGGLES) -->
+<!-- ============================================ -->
+<div class="feature-block f4">
+    <div class="feature-header">
+        <span class="feature-num">FEATURE 4</span>
+        <span class="feature-title">Redesigned Focus Screen — AMOLED + Quick Toggles</span>
+    </div>
+    <p class="feature-sub">তোমার prompt অনুযায়ী focus screen redesigned — AMOLED black, 12h clock with small AM/PM, 3 quick control toggles, Allowed Apps placeholder, Time Remaining।</p>
+
+    <div class="file-group">
+        <h4>Files Modified</h4>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> focus/FocusScreen.kt</span>
+        <span class="file-tag mod"><span class="tag-icon">✏️</span> AndroidManifest.xml <span style="color:#64748b">(WiFi/Network permission)</span></span>
+    </div>
+
+    <ul class="detail-list">
+        <li><strong>FocusScreen.kt</strong> — সম্পূর্ণ নতুন লেআউট:<br/>
+            • Pure black AMOLED background (#000000)<br/>
+            • 12-hour clock + ছোট AM/PM পাশে<br/>
+            • Date — "Tuesday, November 10" ফরম্যাট<br/>
+            • 3 quick toggle cards (Wi-Fi / Mobile Data / Airplane) — এক সারিতে, tap করলে visual On↔Off + Android Internet Panel খোলে<br/>
+            • Allowed Apps placeholder<br/>
+            • Time Remaining card নিচে<br/>
+            • Exit button = door icon (ExitToApp)<br/>
+            • Auto-exit + celebration আগের মতোই
+        </li>
+        <li><strong>AndroidManifest.xml</strong> — ACCESS_WIFI_STATE, ACCESS_NETWORK_STATE যোগ।</li>
+    </ul>
+</div>
+
+<footer>
+    📅 Last updated: November 2026 &nbsp;•&nbsp; Phase 2 — Focus Mode
+</footer>
+
+</div>
+</body>
+</html>
