@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">PhoneMentor</string>
-
+    <string name="accessibility_service_description">Phone Mentor uses Accessibility to keep you locked on the focus screen during a focus session. It only detects which app is open — it does not read your screen content.</string>
 </resources>

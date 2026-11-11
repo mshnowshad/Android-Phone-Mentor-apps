@@ -2,29 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-
-
-    <!--    usage stats permission-->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
-
-    <!-- ############### PHASE - 2 ##################   -->
-
-    <!--  Wifi state read permission   -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Draw overlays on top of other apps (user must grant in Settings) -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
-
-
-
-
-
-
 
     <queries>
         <intent>
@@ -37,9 +21,6 @@
         </intent>
     </queries>
 
-
-
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -49,6 +30,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PhoneMentor">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -57,27 +39,44 @@
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- PHASE-2 ;Focus Setup Activity — timer select page -->
         <activity
             android:name=".focus.FocusSetupActivity"
             android:exported="false"
             android:theme="@style/Theme.PhoneMentor"
             android:screenOrientation="portrait" />
 
+        <!-- singleTop + excludeFromRecents: focus activity ke recents e na dekhao -->
         <activity
             android:name=".focus.FocusModeActivity"
             android:exported="false"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true"
             android:theme="@style/Theme.PhoneMentor"
             android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|keyboardHidden" />
 
+        <activity
+            android:name=".focus.AllowedAppsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PhoneMentor"
+            android:screenOrientation="portrait" />
 
+        <!-- Accessibility Service — Focus Guard -->
+        <service
+            android:name=".focus.FocusGuardService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/focus_guard_service" />
+        </service>
 
     </application>
-
 </manifest>

@@ -1,8 +1,19 @@
 package com.example.phonementor
 
+import android.Manifest
+import android.app.AppOpsManager
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.net.Uri
+import android.os.Build
+import android.os.Process
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,6 +24,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,22 +43,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.phonementor.ui.theme.PhoneMentorTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-
-// PHASE -2
-import android.content.Intent
+import androidx.core.content.ContextCompat
+import com.example.phonementor.focus.AllowedAppsActivity
+import com.example.phonementor.focus.FocusGuardService
 import com.example.phonementor.focus.FocusSetupActivity
-
+import com.example.phonementor.ui.theme.PhoneMentorTheme
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private data class Feature(val title: String, val icon: ImageVector)
-
 
 private val features = listOf(
     Feature("Focus mode", Icons.Outlined.CenterFocusStrong),
@@ -66,26 +79,128 @@ private val panelItems = listOf(
     Feature("About", Icons.Outlined.Info)
 )
 
-// Ekhon sample data. Pore UsageStatsManager diye asol data boshabo.
+private enum class PermKind { Accessibility, UsageAccess, Overlay, Notification }
 
+private data class PermItem(
+    val kind: PermKind,
+    val title: String,
+    val description: String,
+    val icon: ImageVector
+)
+
+private val allPermissions = listOf(
+    PermItem(
+        kind = PermKind.Accessibility,
+        title = "Accessibility (Required)",
+        description = "Keeps you locked on the focus screen. Without this, the phone lock will not work.",
+        icon = Icons.Outlined.Lock
+    ),
+    PermItem(
+        kind = PermKind.UsageAccess,
+        title = "Usage access",
+        description = "Needed for daily screen-time reports. Your data stays on this phone.",
+        icon = Icons.Outlined.BarChart
+    ),
+    PermItem(
+        kind = PermKind.Overlay,
+        title = "Display over apps",
+        description = "Lets Phone Mentor show the focus lock screen above other apps.",
+        icon = Icons.Outlined.Layers
+    ),
+    PermItem(
+        kind = PermKind.Notification,
+        title = "Notifications",
+        description = "Shows focus timer and reminders. You can change this later.",
+        icon = Icons.Outlined.Notifications
+    )
+)
+
+private fun isAccessibilityGranted(context: android.content.Context): Boolean {
+    val service = ComponentName(context, FocusGuardService::class.java).flattenToString()
+    val enabled = Settings.Secure.getString(
+        context.contentResolver,
+        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+    ) ?: return false
+    return enabled.split(':').any { it.equals(service, ignoreCase = true) }
+}
+
+private fun isUsageAccessGranted(context: android.content.Context): Boolean {
+    val appOps = context.getSystemService(android.content.Context.APP_OPS_SERVICE) as AppOpsManager
+    @Suppress("DEPRECATION")
+    val mode = appOps.checkOpNoThrow(
+        AppOpsManager.OPSTR_GET_USAGE_STATS,
+        Process.myUid(),
+        context.packageName
+    )
+    return mode == AppOpsManager.MODE_ALLOWED
+}
+
+private fun isOverlayGranted(context: android.content.Context): Boolean =
+    Settings.canDrawOverlays(context)
+
+private fun isNotificationGranted(context: android.content.Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else true
+}
+
+private fun isPermissionGranted(context: android.content.Context, kind: PermKind): Boolean =
+    when (kind) {
+        PermKind.Accessibility -> isAccessibilityGranted(context)
+        PermKind.UsageAccess   -> isUsageAccessGranted(context)
+        PermKind.Overlay       -> isOverlayGranted(context)
+        PermKind.Notification  -> isNotificationGranted(context)
+    }
+
+private fun openPermissionSettings(context: android.content.Context, kind: PermKind) {
+    try {
+        when (kind) {
+            PermKind.Accessibility -> context.startActivity(
+                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            PermKind.UsageAccess -> context.startActivity(
+                Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            PermKind.Overlay -> context.startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:${context.packageName}")
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            PermKind.Notification -> { /* Runtime launcher handles it */ }
+        }
+    } catch (_: Exception) {
+        try {
+            context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) { }
+    }
+}
 
 @Composable
 fun HomeScreen() {
     var panelOpen by remember { mutableStateOf(false) }
-    var hasAccess by remember { mutableStateOf(false) }
-    var usage by remember { mutableStateOf<List<AppUsage>>(emptyList()) }
     val context = LocalContext.current
 
-    // Permission na thakle 1.5s por por check, thakle 15s por por data refresh
+    var grantedMap by remember {
+        mutableStateOf(PermKind.values().associateWith { isPermissionGranted(context, it) })
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
-            val granted = hasUsageAccess(context)
-            hasAccess = granted
-            if (granted) {
-                usage = withContext(Dispatchers.Default) { todayUsage(context) }
-            }
-            delay(if (granted) 5_000 else 1_500)
+            grantedMap = PermKind.values().associateWith { isPermissionGranted(context, it) }
+            delay(1_500L)
         }
+    }
+
+    val notifLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        grantedMap = grantedMap.toMutableMap().apply { put(PermKind.Notification, granted) }
     }
 
     BackHandler(enabled = panelOpen) { panelOpen = false }
@@ -94,31 +209,38 @@ fun HomeScreen() {
         Toast.makeText(context, "$title: coming soon", Toast.LENGTH_SHORT).show()
     }
 
+    fun onPermissionAction(kind: PermKind) {
+        when (kind) {
+            PermKind.Notification -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+            else -> openPermissionSettings(context, kind)
+        }
+    }
+
+    val missing = allPermissions.filter { grantedMap[it.kind] != true }
+
     Box(
         Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
         HomeContent(
-            hasAccess = hasAccess,
-            usage = usage,
-            onGrantClick = { openUsageAccessSettings(context) },
+            missingPermissions = missing,
+            onPermissionAction = { onPermissionAction(it) },
             onMenuClick = { panelOpen = true },
             onFeatureClick = { feature ->
-                if (feature.title == "Focus mode") {
-                    context.startActivity(Intent(context, FocusSetupActivity::class.java))
-                } else {
-                    comingSoon(feature.title)
+                when (feature.title) {
+                    "Focus mode" -> context.startActivity(Intent(context, FocusSetupActivity::class.java))
+                    "Allowed apps" -> context.startActivity(Intent(context, AllowedAppsActivity::class.java))
+                    else -> comingSoon(feature.title)
                 }
-
             }
         )
 
-        AnimatedVisibility(
-            visible = panelOpen,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
+        AnimatedVisibility(visible = panelOpen, enter = fadeIn(), exit = fadeOut()) {
             Box(
                 Modifier
                     .fillMaxSize()
@@ -139,26 +261,15 @@ fun HomeScreen() {
             enter = slideInHorizontally(initialOffsetX = { it }),
             exit = slideOutHorizontally(targetOffsetX = { it })
         ) {
-            SidePanel(
-                onItemClick = {
-                    panelOpen = false
-                    comingSoon(it.title)
-                }
-            )
+            SidePanel(onItemClick = { panelOpen = false; comingSoon(it.title) })
         }
     }
 }
 
-
-
-
-
-
 @Composable
 private fun HomeContent(
-    hasAccess: Boolean,
-    usage: List<AppUsage>,
-    onGrantClick: () -> Unit,
+    missingPermissions: List<PermItem>,
+    onPermissionAction: (PermKind) -> Unit,
     onMenuClick: () -> Unit,
     onFeatureClick: (Feature) -> Unit
 ) {
@@ -172,20 +283,22 @@ private fun HomeContent(
     ) {
         TopBar(onMenuClick)
         Spacer(Modifier.height(12.dp))
-        if (hasAccess) ScreenTimeCard(usage) else PermissionCard(onGrantClick)
+
+        ClockCard()
+
+        if (missingPermissions.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            PermissionCarousel(items = missingPermissions, onAction = onPermissionAction)
+        }
+
         Spacer(Modifier.height(20.dp))
-        Text(
-            "Features",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 13.sp
-        )
+
+        Text("Features", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         Spacer(Modifier.height(8.dp))
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             features.chunked(2).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    row.forEach { f ->
-                        FeatureTile(f, Modifier.weight(1f)) { onFeatureClick(f) }
-                    }
+                    row.forEach { f -> FeatureTile(f, Modifier.weight(1f)) { onFeatureClick(f) } }
                     if (row.size < 2) Spacer(Modifier.weight(1f))
                 }
             }
@@ -193,104 +306,84 @@ private fun HomeContent(
     }
 }
 
-
 @Composable
-private fun TopBar(onMenuClick: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            "Phone Mentor",
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
-        )
-        Box(
-            Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .clickable { onMenuClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Outlined.MoreVert,
-                contentDescription = "Menu",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
+private fun ClockCard() {
+    var now by remember { mutableStateOf(Date()) }
+    LaunchedEffect(Unit) {
+        while (true) { now = Date(); delay(1_000L) }
     }
-}
 
-@Composable
-private fun ScreenTimeCard(usage: List<AppUsage>) {
+    val timeFmt = remember { SimpleDateFormat("hh:mm", Locale.getDefault()) }
+    val amPmFmt = remember { SimpleDateFormat("a", Locale.getDefault()) }
+    val dateFmt = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()) }
+
     val shape = RoundedCornerShape(20.dp)
-    val total = usage.sumOf { it.millis }
-    val limit = 5L * 60 * 60 * 1000
-    val percent = ((total * 100) / limit).toInt().coerceAtMost(100)
-    val top = usage.take(3)
-    val maxMillis = top.maxOfOrNull { it.millis } ?: 1L
-
     Column(
         Modifier
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-            .padding(20.dp)
+            .padding(horizontal = 20.dp, vertical = 22.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            "Screen time today",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 13.sp
-        )
-        Text(
-            formatDuration(total),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 44.sp,
-            fontWeight = FontWeight.Light
-        )
-        Text(
-            "Limit 5h, $percent% used",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 13.sp
-        )
-        Spacer(Modifier.height(16.dp))
-        if (top.isEmpty()) {
+        Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                "No app usage yet today.",
+                timeFmt.format(now),
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 56.sp,
+                fontWeight = FontWeight.Light
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                amPmFmt.format(now),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
         }
-        top.forEach { app ->
-            Row(
-                Modifier.padding(vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    app.label,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(80.dp)
-                )
-                UsageBar(app.millis.toFloat() / maxMillis, Modifier.weight(1f))
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    formatDuration(app.millis),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp
-                )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            dateFmt.format(now),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun PermissionCarousel(items: List<PermItem>, onAction: (PermKind) -> Unit) {
+    val pagerState = rememberPagerState(pageCount = { items.size })
+
+    Column(Modifier.fillMaxWidth()) {
+        HorizontalPager(state = pagerState, pageSpacing = 12.dp) { page ->
+            PermissionCard(item = items[page], onAction = { onAction(items[page].kind) })
+        }
+        if (items.size > 1) {
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                repeat(items.size) { i ->
+                    val active = pagerState.currentPage == i
+                    Box(
+                        Modifier
+                            .padding(horizontal = 3.dp)
+                            .size(if (active) 8.dp else 6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (active) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outline
+                            )
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun PermissionCard(onGrantClick: () -> Unit) {
+private fun PermissionCard(item: PermItem, onAction: () -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     Column(
         Modifier
@@ -300,36 +393,33 @@ private fun PermissionCard(onGrantClick: () -> Unit) {
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
             .padding(20.dp)
     ) {
-        Icon(
-            Icons.Outlined.Security,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "Allow usage access",
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Phone Mentor needs this to show your screen time. Your data stays on this phone.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 13.sp
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(item.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(Modifier.width(12.dp))
+            Text(item.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(item.description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         Spacer(Modifier.height(16.dp))
         Box(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(MaterialTheme.colorScheme.primary)
-                .clickable { onGrantClick() }
+                .clickable { onAction() }
                 .padding(vertical = 14.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                "Open settings",
+                if (item.kind == PermKind.Notification) "Allow" else "Open settings",
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
@@ -338,24 +428,22 @@ private fun PermissionCard(onGrantClick: () -> Unit) {
     }
 }
 
-
-
-
-
 @Composable
-private fun UsageBar(fraction: Float, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .height(6.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(fraction)
-                .background(MaterialTheme.colorScheme.primary)
+private fun TopBar(onMenuClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            "Phone Mentor",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
         )
+        Box(
+            Modifier.size(44.dp).clip(CircleShape).clickable { onMenuClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Outlined.MoreVert, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onBackground)
+        }
     }
 }
 
@@ -372,18 +460,8 @@ private fun FeatureTile(feature: Feature, modifier: Modifier, onClick: () -> Uni
             .padding(14.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(
-            feature.icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            feature.title,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 14.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        Icon(feature.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Text(feature.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -397,43 +475,19 @@ private fun SidePanel(onItemClick: (Feature) -> Unit) {
             .navigationBarsPadding()
             .padding(20.dp)
     ) {
-        Column(
-            Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
-                Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    "A",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 24.sp
-                )
+                Text("A", color = MaterialTheme.colorScheme.primary, fontSize = 24.sp)
             }
             Spacer(Modifier.height(10.dp))
-            Text(
-                "Your name",
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                "3 day streak",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp
-            )
+            Text("Your name", color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Text("3 day streak", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         }
         Spacer(Modifier.height(20.dp))
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(MaterialTheme.colorScheme.outline)
-        )
+        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
         Spacer(Modifier.height(8.dp))
         panelItems.forEach { item ->
             Row(
@@ -444,17 +498,9 @@ private fun SidePanel(onItemClick: (Feature) -> Unit) {
                     .padding(horizontal = 8.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    item.icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Icon(item.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.width(14.dp))
-                Text(
-                    item.title,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 15.sp
-                )
+                Text(item.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
             }
         }
     }
@@ -466,11 +512,7 @@ private fun HomeLightPreview() {
     PhoneMentorTheme(darkTheme = false) { HomeScreen() }
 }
 
-@Preview(
-    showBackground = true,
-    name = "Dark",
-    uiMode = Configuration.UI_MODE_NIGHT_YES
-)
+@Preview(showBackground = true, name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun HomeDarkPreview() {
     PhoneMentorTheme(darkTheme = true) { HomeScreen() }
